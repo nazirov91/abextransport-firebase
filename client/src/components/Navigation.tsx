@@ -5,7 +5,7 @@ import { useGlobals } from "@/lib/globals";
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { businessName } = useGlobals();
+  const { businessName, phone } = useGlobals();
 
   const scrollToSection = (sectionId: string) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
@@ -68,7 +68,7 @@ export default function Navigation() {
           <div className="hidden md:flex items-center space-x-4">
             <div className="flex items-center text-sm text-muted-foreground">
               <Phone className="h-4 w-4 mr-1" />
-              <span>+1 (713) 344-4668</span>
+              <span>{phone}</span>
             </div>
             <Button
               onClick={() => scrollToSection("quote")}
@@ -135,7 +135,7 @@ export default function Navigation() {
             <div className="px-3 py-2">
               <div className="flex items-center text-sm text-muted-foreground mb-2">
                 <Phone className="h-4 w-4 mr-1" />
-                <span>+1 (713) 344-4668</span>
+                <span>{phone}</span>
               </div>
               <Button
                 onClick={() => scrollToSection("quote")}

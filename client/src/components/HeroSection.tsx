@@ -1,8 +1,10 @@
 import MultiStepQuoteForm from "./MultiStepQuoteForm";
 import { CheckCircle, Star } from "lucide-react";
 import carHaulerImage from "@assets/generated_images/Car_hauler_on_highway_4e5c4dfb.png";
+import { useGlobals } from "@/lib/globals";
 
 export default function HeroSection() {
+  const { heroMessage, tagline } = useGlobals();
   return (
     <section
       id="quote"
@@ -22,13 +24,11 @@ export default function HeroSection() {
           <div className="space-y-8">
             <div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-                Reliable Auto Transport Services
-                <span className="text-primary"> Nationwide</span>
+                {heroMessage}
               </h1>
               <p className="text-xl text-muted-foreground mt-6 leading-relaxed">
-                Professional car shipping with door-to-door service, full
-                insurance coverage, and trusted nationwide network. Get your
-                vehicle transported safely and affordably.
+                {tagline ||
+                  "Professional car shipping with door-to-door service, full insurance coverage, and trusted nationwide network."}
               </p>
             </div>
 

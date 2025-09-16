@@ -28,6 +28,7 @@ Removed. This project no longer includes Netlify configuration or workflows.
 ### Firebase Hosting + Firestore
 - **Authentication & Hosting**: Configure Firebase Authentication and Hosting in your Firebase project
 - **Firestore Globals**: Store site-wide settings in a Firestore document referenced by `VITE_FIRESTORE_GLOBALS_DOC`
+- **Firestore FAQ**: Manage FAQ entries in the document referenced by `VITE_FIRESTORE_FAQ_DOC`
 - **Firebase SDK Config**: Provide the web app config via the `.env` variables in `.env.example`
 
 **Deployment**:

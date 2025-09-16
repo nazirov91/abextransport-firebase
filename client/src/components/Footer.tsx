@@ -48,7 +48,7 @@ const socialLinks = [
 ];
 
 export default function Footer() {
-  const { businessName } = useGlobals();
+  const { businessName, tagline, phone, email, mcNumber, dotNumber } = useGlobals();
   const scrollToSection = (sectionId: string) => {
     const id = sectionId.startsWith("#") ? sectionId.substring(1) : sectionId;
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -64,21 +64,17 @@ export default function Footer() {
           {/* Company Info */}
           <div className="lg:col-span-2">
             <div className="text-2xl font-bold text-primary mb-4">{businessName}</div>
-            <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
-              America's trusted auto transport company with over 15 years of
-              experience. We provide safe, reliable, and affordable vehicle
-              shipping services nationwide.
-            </p>
+            <p className="text-muted-foreground mb-6 text-sm leading-relaxed">{tagline}</p>
 
             {/* Contact Info */}
             <div className="space-y-2">
               <div className="flex items-center gap-3 text-sm">
                 <Phone className="h-4 w-4 text-primary" />
-                <span className="text-foreground">+1 (713) 344-4668</span>
+                <span className="text-foreground">{phone}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Mail className="h-4 w-4 text-primary" />
-                <span className="text-foreground">Bon999@yahoo.com</span>
+                <span className="text-foreground">{email}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <MapPin className="h-4 w-4 text-primary" />
@@ -149,7 +145,7 @@ export default function Footer() {
               >
                 Terms of Service
               </button>
-              <span className="text-muted-foreground">FMCSA MC-123456</span>
+              <span className="text-muted-foreground">FMCSA {mcNumber} · USDOT {dotNumber}</span>
             </div>
           </div>
         </div>
