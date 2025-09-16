@@ -1,0 +1,80 @@
+backend:
+  name: github
+  repo: your-github-username/your-repo # Update to your GitHub repo when deploying
+  branch: main # Change to your default branch
+
+# Media files will be stored in the repo under attached_assets
+media_folder: "attached_assets"
+public_folder: "/attached_assets"
+
+# Optional: Enable local development
+local_backend: true
+
+# Collections define the structure for content types
+collections:
+  - name: "pages"
+    label: "Pages"
+    files:
+      - label: "Homepage Content"
+        name: "homepage"
+        file: "content/homepage.md"
+        fields:
+          - {label: "Title", name: "title", widget: "string"}
+          - {label: "Meta Description", name: "description", widget: "text"}
+          - label: "Hero Section"
+            name: "hero"
+            widget: "object"
+            fields:
+              - {label: "Headline", name: "headline", widget: "string"}
+              - {label: "Subheadline", name: "subheadline", widget: "text"}
+              - {label: "Call to Action Text", name: "cta_text", widget: "string"}
+          - label: "Services"
+            name: "services"
+            widget: "list"
+            fields:
+              - {label: "Service Name", name: "name", widget: "string"}
+              - {label: "Description", name: "description", widget: "text"}
+              - {label: "Icon", name: "icon", widget: "string"}
+
+  - name: "testimonials"
+    label: "Customer Testimonials"
+    folder: "content/testimonials"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - {label: "Customer Name", name: "name", widget: "string"}
+      - {label: "Location", name: "location", widget: "string"}
+      - {label: "Vehicle", name: "vehicle", widget: "string"}
+      - {label: "Rating", name: "rating", widget: "number", value_type: "int", min: 1, max: 5}
+      - {label: "Review", name: "review", widget: "text"}
+      - {label: "Date", name: "date", widget: "datetime"}
+
+  - name: "faq"
+    label: "FAQ"
+    folder: "content/faq"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {label: "Question", name: "question", widget: "string"}
+      - {label: "Answer", name: "answer", widget: "text"}
+      - {label: "Category", name: "category", widget: "select", options: ["Pricing", "Shipping", "Insurance", "General"]}
+      - {label: "Order", name: "order", widget: "number", value_type: "int"}
+
+  - name: "settings"
+    label: "Site Settings"
+    files:
+      - label: "Company Information"
+        name: "company"
+        file: "content/settings/company.md"
+        fields:
+          - {label: "Company Name", name: "company_name", widget: "string"}
+          - {label: "Phone", name: "phone", widget: "string"}
+          - {label: "Email", name: "email", widget: "string"}
+          - {label: "Address", name: "address", widget: "text"}
+          - label: "Business Hours"
+            name: "hours"
+            widget: "object"
+            fields:
+              - {label: "Monday-Friday", name: "weekdays", widget: "string"}
+              - {label: "Saturday", name: "saturday", widget: "string"}
+              - {label: "Sunday", name: "sunday", widget: "string"}
