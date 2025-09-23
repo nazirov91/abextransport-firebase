@@ -155,7 +155,7 @@ export default function ContactSection() {
                     onClick={() => console.log("Call now clicked")}
                   >
                     <Phone className="h-4 w-4 mr-2" />
-                    Call +1 (713) 344-4668
+                    Call +1 (310) 980-1793
                   </Button>
                   <Button
                     variant="outline"
