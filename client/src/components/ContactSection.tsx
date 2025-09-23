@@ -40,13 +40,13 @@ const contactInfo = [
   {
     icon: Phone,
     title: "Call Us Now",
-    details: "+1 (713) 344-4668",
+    details: "+1 (310) 980-1793",
     description: "Speak with a transport specialist",
   },
   {
     icon: Mail,
     title: "Email Us",
-    details: "Bon999@yahoo.com",
+    details: "andy.kopyloff@gmail.com",
     description: "Get a response within 1 hour",
   },
   {
@@ -201,7 +201,7 @@ export default function ContactSection() {
                     <Input
                       id="contact-phone"
                       type="tel"
-                      placeholder="+1 (713) 344-4668"
+                      placeholder="+1 (310) 980-1793"
                       value={formData.phone}
                       onChange={(e) =>
                         handleInputChange("phone", e.target.value)
@@ -217,7 +217,7 @@ export default function ContactSection() {
                   <Input
                     id="contact-email"
                     type="email"
-                    placeholder="Bon999@yahoo.com"
+                    placeholder="andy.kopyloff@gmail.com"
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     data-testid="input-contact-email"
