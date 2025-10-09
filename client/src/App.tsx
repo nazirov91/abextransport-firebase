@@ -9,12 +9,16 @@ import { GlobalsProvider } from "@/lib/globals";
 import { AuthProvider } from "@/lib/auth";
 import { FaqProvider } from "@/lib/faq";
 import AdminPage from "@/pages/admin";
+import PrivacyPolicy from "@/pages/privacy-policy";
+import TermsOfService from "@/pages/terms-of-service";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/terms-of-service" component={TermsOfService} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

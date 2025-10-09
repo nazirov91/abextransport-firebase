@@ -9,6 +9,7 @@ import {
   Linkedin,
   Instagram,
 } from "lucide-react";
+import { Link } from "wouter";
 
 const footerSections = [
   {
@@ -131,20 +132,20 @@ export default function Footer() {
             <div className="text-sm text-muted-foreground">© {currentYear} {businessName}. All rights reserved.</div>
 
             <div className="flex items-center gap-6 text-sm">
-              <button
+              <Link
+                href="/privacy-policy"
                 className="text-muted-foreground hover:text-primary transition-colors hover-elevate"
-                onClick={() => console.log("Privacy policy clicked")}
                 data-testid="link-privacy-policy"
               >
                 Privacy Policy
-              </button>
-              <button
+              </Link>
+              <Link
+                href="/terms-of-service"
                 className="text-muted-foreground hover:text-primary transition-colors hover-elevate"
-                onClick={() => console.log("Terms of service clicked")}
                 data-testid="link-terms-of-service"
               >
                 Terms of Service
-              </button>
+              </Link>
               <span className="text-muted-foreground">FMCSA {mcNumber} · USDOT {dotNumber}</span>
             </div>
           </div>
