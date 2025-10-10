@@ -115,8 +115,8 @@ export function GlobalsProvider({ children }: { children: React.ReactNode }) {
   const businessName = globals.business_name?.trim() || "Abex Transport";
   const heroMessage = globals.hero_message?.trim() || businessName;
   const tagline = globals.tagline?.trim() || "Reliable auto transport services";
-  const phone = globals.phone?.trim() || "+1 (713) 344-4668";
-  const email = globals.email?.trim() || "Bon999@yahoo.com";
+  const phone = globals.phone?.trim() || "281-220-1799";
+  const email = globals.email?.trim() || "contact@abextransport.com";
   const mcNumber = globals.mc?.trim() || "MC-123456";
   const dotNumber = globals.dot?.trim() || "DOT-7891011";
 
