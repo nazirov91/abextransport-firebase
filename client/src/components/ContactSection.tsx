@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { extractDigits, formatPhoneNumber, normalizePhoneNumber } from '@/lib/phone';
+import { resolveFunctionUrl } from '@/lib/functions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,9 +68,23 @@ export default function ContactSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+
+    const digitsOnlyPhone = extractDigits(formData.phone);
+    if (digitsOnlyPhone.length < 10) {
+      setSubmitError('Please enter a valid phone number.');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    const endpoint = getContactFunctionUrl();
+    const endpoint = resolveFunctionUrl('submitContactForm', '/api/contact');
+    const payload = {
+      ...formData,
+      phone: normalizePhoneNumber(formData.phone),
+    };
+
+    console.log('url', endpoint);
+    console.log('payload', JSON.stringify(payload));
 
     try {
       const response = await fetch(endpoint, {
@@ -76,12 +92,13 @@ export default function ContactSection() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorPayload = await response.json().catch(() => null);
-        const errorMessage = errorPayload?.error ?? 'We could not send your message. Please try again.';
+        const errorMessage =
+          errorPayload?.error ?? 'We could not send your message. Please try again.';
         throw new Error(errorMessage);
       }
 
@@ -99,7 +116,10 @@ export default function ContactSection() {
   };
 
   const handleInputChange = (field: keyof ContactFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [field]: field === 'phone' ? formatPhoneNumber(value) : value,
+    }));
   };
 
   return (
@@ -205,6 +225,8 @@ export default function ContactSection() {
                     <Input
                       id='contact-phone'
                       type='tel'
+                      inputMode='tel'
+                      maxLength={20}
                       placeholder='+1 (281) 220-1799'
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
@@ -296,10 +318,4 @@ export default function ContactSection() {
       </AlertDialog>
     </section>
   );
-}
-
-function getContactFunctionUrl() {
-  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-  const region = import.meta.env.VITE_FIREBASE_FUNCTIONS_REGION || 'us-central1';
-  return projectId ? `https://${region}-${projectId}.cloudfunctions.net/submitContactForm` : '/api/contact';
 }

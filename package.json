@@ -4,10 +4,10 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 5004 --strictPort",
+    "dev": "VITE_USE_FUNCTIONS_EMULATOR=true vite --host 0.0.0.0 --port 5004 --strictPort",
     "build": "vite build",
     "preview": "vite preview --port=5000 --strictPort",
-    "start": "vite preview --port=5000 --strictPort",
+    "start": "vite preview --port=5000 --strictPort VITE_USE_FUNCTIONS_EMULATOR=false",
     "check": "tsc --noEmit"
   },
   "dependencies": {

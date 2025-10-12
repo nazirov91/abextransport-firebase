@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,8 @@ import {
   Truck,
   CheckCircle,
 } from "lucide-react";
+import { extractDigits, formatPhoneNumber } from "@/lib/phone";
+import { resolveFunctionUrl } from "@/lib/functions";
 
 declare global {
   interface Window {
@@ -327,6 +330,23 @@ const vehicleMakes = [
   "Volvo",
 ];
 
+const vehicleTypeOptions = [
+  { label: "Car", value: "Car" },
+  { label: "Sedan", value: "sedan" },
+  { label: "Boat", value: "Boat" },
+  { label: "Motorcycle", value: "Motorcycle" },
+  { label: "Pickup", value: "Pickup" },
+  { label: "Pickup (2 Doors)", value: "pickup_2_doors" },
+  { label: "SUV", value: "SUV" },
+  { label: "Van", value: "Van" },
+  { label: "RV", value: "RV" },
+  { label: "Travel Trailer", value: "Travel Trailer" },
+  { label: "ATV", value: "ATV" },
+  { label: "Convertible", value: "Convertible" },
+  { label: "Coupe", value: "Coupe" },
+  { label: "Other", value: "Other" },
+];
+
 interface StepOneData {
   origin: string;
   destination: string;
@@ -339,6 +359,7 @@ interface StepTwoData {
   make: string;
   model: string;
   isOperable: boolean;
+  vehicleType: string;
 }
 
 interface StepThreeData {
@@ -346,6 +367,7 @@ interface StepThreeData {
   lastName: string;
   email: string;
   phone: string;
+  comments: string;
 }
 
 interface VehicleModel {
@@ -370,12 +392,14 @@ export default function MultiStepQuoteForm() {
     make: "",
     model: "",
     isOperable: true,
+    vehicleType: "Car",
   });
   const [stepThreeData, setStepThreeData] = useState<StepThreeData>({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
+    comments: "",
   });
 
   const [availableModels, setAvailableModels] = useState<VehicleModel[]>([]);
@@ -400,6 +424,8 @@ export default function MultiStepQuoteForm() {
     useState(false);
   const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] =
     useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const autocompleteServiceRef = useRef<any>(null);
   const placesServiceRef = useRef<any>(null);
   const placesServiceElementRef = useRef<HTMLDivElement | null>(null);
@@ -845,7 +871,7 @@ export default function MultiStepQuoteForm() {
     stepOneData.pickupDate &&
     stepOneData.trailerType;
   const canProceedFromStep2 =
-    stepTwoData.year && stepTwoData.make && stepTwoData.model;
+    stepTwoData.year && stepTwoData.make && stepTwoData.model && stepTwoData.vehicleType;
   const canSubmitForm =
     stepThreeData.firstName &&
     stepThreeData.lastName &&
@@ -864,38 +890,121 @@ export default function MultiStepQuoteForm() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Quote form submitted:", {
-      stepOneData,
-      stepTwoData,
-      stepThreeData,
-    });
+    if (isSubmitting) return;
 
-    // Save submitted data for dialog before resetting
-    setSubmittedData({ stepTwo: stepTwoData, stepThree: stepThreeData });
+    setSubmitError(null);
 
-    // Show success dialog
-    setShowSuccessDialog(true);
+    const phoneDigits = extractDigits(stepThreeData.phone);
+    if (phoneDigits.length < 10) {
+      setSubmitError("Please enter a valid phone number.");
+      return;
+    }
 
-    // Reset form
-    setCurrentStep(1);
-    setStepOneData({
-      origin: "",
-      destination: "",
-      pickupDate: "",
-      trailerType: "open",
-    });
-    setOriginQuery("");
-    setDestinationQuery("");
-    setOriginSuggestions([]);
-    setDestinationSuggestions([]);
-    setShowOriginSuggestions(false);
-    setShowDestinationSuggestions(false);
-    resetOriginSessionToken();
-    resetDestinationSessionToken();
-    setStepTwoData({ year: "", make: "", model: "", isOperable: true });
-    setStepThreeData({ firstName: "", lastName: "", email: "", phone: "" });
+    const originParts = parseLocationParts(stepOneData.origin);
+    const destinationParts = parseLocationParts(stepOneData.destination);
+
+    if (!originParts || !destinationParts) {
+      setSubmitError(
+        "Please choose valid origin and destination cities from the suggestions.",
+      );
+      return;
+    }
+
+    const vehicleYear = Number(stepTwoData.year);
+    if (!Number.isFinite(vehicleYear)) {
+      setSubmitError("Please select a valid vehicle year.");
+      return;
+    }
+
+    const payload = {
+      firstName: stepThreeData.firstName.trim(),
+      lastName: stepThreeData.lastName.trim(),
+      email: stepThreeData.email.trim(),
+      phone: phoneDigits,
+      origin: originParts,
+      destination: destinationParts,
+      pickupDate: stepOneData.pickupDate,
+      trailerType: stepOneData.trailerType,
+      vehicle: {
+        year: vehicleYear,
+        make: stepTwoData.make.trim(),
+        model: stepTwoData.model.trim(),
+        isOperable: stepTwoData.isOperable,
+        type: stepTwoData.vehicleType,
+      },
+      comments: stepThreeData.comments.trim(),
+    };
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(resolveFunctionUrl("submitQuoteRequest", "/api/quote"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        const message =
+          errorPayload?.error ??
+          "We could not submit your quote request. Please try again.";
+        throw new Error(message);
+      }
+
+      const submittedStepTwo: StepTwoData = { ...stepTwoData };
+      const submittedStepThree: StepThreeData = { ...stepThreeData };
+
+      setSubmittedData({
+        stepTwo: submittedStepTwo,
+        stepThree: submittedStepThree,
+      });
+      setShowSuccessDialog(true);
+
+      setCurrentStep(1);
+      setStepOneData({
+        origin: "",
+        destination: "",
+        pickupDate: "",
+        trailerType: "open",
+      });
+      setOriginQuery("");
+      setDestinationQuery("");
+      setOriginSuggestions([]);
+      setDestinationSuggestions([]);
+      setShowOriginSuggestions(false);
+      setShowDestinationSuggestions(false);
+      resetOriginSessionToken();
+      resetDestinationSessionToken();
+      setStepTwoData({
+        year: "",
+        make: "",
+        model: "",
+        isOperable: true,
+        vehicleType: "Car",
+      });
+      setStepThreeData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        comments: "",
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        setSubmitError(error.message);
+      } else {
+        setSubmitError(
+          "We could not submit your quote request. Please try again.",
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getStepIcon = (step: number) => {
@@ -1267,6 +1376,27 @@ export default function MultiStepQuoteForm() {
               </div>
 
               <div className="space-y-2">
+                <Label>* Vehicle Type</Label>
+                <Select
+                  value={stepTwoData.vehicleType}
+                  onValueChange={(value) =>
+                    setStepTwoData((prev) => ({ ...prev, vehicleType: value }))
+                  }
+                >
+                  <SelectTrigger data-testid="select-vehicle-type">
+                    <SelectValue placeholder="Select vehicle type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicleTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="operable">Is it operable?</Label>
                   <Switch
@@ -1369,16 +1499,35 @@ export default function MultiStepQuoteForm() {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="281-220-1799"
+                  inputMode="tel"
+                  maxLength={20}
+                  placeholder="(281) 220-1799"
                   value={stepThreeData.phone}
                   onChange={(e) =>
                     setStepThreeData((prev) => ({
                       ...prev,
-                      phone: e.target.value,
+                      phone: formatPhoneNumber(e.target.value),
                     }))
                   }
                   data-testid="input-phone"
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="comments">Notes for the dispatcher (optional)</Label>
+                <Textarea
+                  id="comments"
+                  placeholder="Tell us about vehicle condition, pickup constraints, or timing details..."
+                  value={stepThreeData.comments}
+                  onChange={(e) =>
+                    setStepThreeData((prev) => ({
+                      ...prev,
+                      comments: e.target.value,
+                    }))
+                  }
+                  data-testid="textarea-comments"
+                  rows={3}
                 />
               </div>
 
@@ -1393,13 +1542,18 @@ export default function MultiStepQuoteForm() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={!canSubmitForm}
+                  disabled={!canSubmitForm || isSubmitting}
                   className="bg-chart-1 hover:bg-chart-1/90 text-white"
                   data-testid="button-submit-quote"
                 >
-                  Get My Quote
+                  {isSubmitting ? "Submitting..." : "Get My Quote"}
                 </Button>
               </div>
+              {submitError && (
+                <p className="text-sm text-red-500" data-testid="text-submit-error">
+                  {submitError}
+                </p>
+              )}
             </div>
           )}
         </form>
@@ -1442,4 +1596,65 @@ export default function MultiStepQuoteForm() {
       </AlertDialog>
     </Card>
   );
+}
+
+function parseLocationParts(value: string) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const simpleMatch = trimmed.match(
+    /^(.+?)[,\s]+([A-Za-z]{2})(?:[,\s]+(\d{5}(?:-\d{4})?))?$/,
+  );
+  if (simpleMatch) {
+    const city = simpleMatch[1].replace(/[,]/g, "").trim();
+    const state = simpleMatch[2].toUpperCase();
+    const postalCode = (simpleMatch[3] ?? "").trim();
+    if (!state) return null;
+    return { city, state, postalCode };
+  }
+
+  const segments = trimmed
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const postalMatch = trimmed.match(/\b\d{5}(?:-\d{4})?\b/);
+  const postalCode = postalMatch ? postalMatch[0] : "";
+
+  let state = "";
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const segment = segments[i];
+    const stateMatch = segment.match(/\b([A-Za-z]{2})\b/);
+    if (stateMatch) {
+      state = stateMatch[1].toUpperCase();
+      segments.splice(i, 1);
+      break;
+    }
+  }
+
+  if (!state) {
+    const fallbackStateMatch = trimmed.match(/\b([A-Za-z]{2})\b/);
+    if (fallbackStateMatch) {
+      state = fallbackStateMatch[1].toUpperCase();
+    }
+  }
+
+  if (!state) return null;
+
+  const cityFromSegments = segments.join(", ").trim();
+  const city =
+    cityFromSegments ||
+    trimmed
+      .replace(state, "")
+      .replace(postalCode, "")
+      .replace(/[,]/g, " ")
+      .trim() ||
+    trimmed;
+
+  return {
+    city,
+    state,
+    postalCode,
+  };
 }

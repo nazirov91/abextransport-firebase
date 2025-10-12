@@ -18,6 +18,13 @@
         }
       },
       {
+        "source": "/api/quote",
+        "function": {
+          "functionId": "submitQuoteRequest",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
