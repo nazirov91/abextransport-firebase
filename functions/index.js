@@ -1,12 +1,17 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
+const functions = require('firebase-functions');
 const sgMail = require('@sendgrid/mail');
 
-const SENDGRID_API_KEY = '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';
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || functions.config().sendgrid?.key;
 const RECIPIENT_EMAIL = 'contact@abextransport.com';
 const FALLBACK_FROM_EMAIL = 'no-reply@sales.abextransport.com';
 
-sgMail.setApiKey(SENDGRID_API_KEY);
+if (!SENDGRID_API_KEY) {
+  logger.warn('SendGrid API key is not configured. Emails will not be sent.');
+} else {
+  sgMail.setApiKey(SENDGRID_API_KEY);
+}
 
 exports.submitContactForm = onRequest({ cors: true, region: 'us-central1' }, async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
@@ -27,6 +32,12 @@ exports.submitContactForm = onRequest({ cors: true, region: 'us-central1' }, asy
 
   if (!name || !email || !phone || !subject || !message) {
     res.status(400).json({ error: 'Missing required form data' });
+    return;
+  }
+
+  if (!SENDGRID_API_KEY) {
+    logger.error('SendGrid API key missing; unable to deliver contact form submission.');
+    res.status(500).json({ error: 'Email service not configured' });
     return;
   }
 

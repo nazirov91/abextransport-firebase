@@ -10,9 +10,10 @@ This project delivers the Abex Transport marketing site built with React, Vite, 
 
 ## Contact Form Email Function
 
-- A Firebase HTTPS function named `submitContactForm` relays contact form submissions to `bona@abextransport.com` through SendGrid.
+- A Firebase HTTPS function named `submitContactForm` relays contact form submissions to `contact@abextransport.com` through SendGrid.
 - Install its dependencies with `cd functions && npm install` before running locally or deploying with `firebase deploy --only functions`.
 - The web app resolves the endpoint automatically using `VITE_FIREBASE_PROJECT_ID`; set `VITE_FIREBASE_FUNCTIONS_REGION` if you deploy outside the default `us-central1` region.
+- Provide the SendGrid API key via `SENDGRID_API_KEY` environment variable (e.g. `firebase functions:config:set sendgrid.key="..."`) and rotate/revoke any previously exposed keys.
 
 ## Firebase Integration
 
