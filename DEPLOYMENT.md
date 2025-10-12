@@ -30,12 +30,14 @@ Removed. This project no longer includes Netlify configuration or workflows.
 - **Firestore Globals**: Store site-wide settings in a Firestore document referenced by `VITE_FIRESTORE_GLOBALS_DOC`
 - **Firestore FAQ**: Manage FAQ entries in the document referenced by `VITE_FIRESTORE_FAQ_DOC`
 - **Firebase SDK Config**: Provide the web app config via the `.env` variables in `.env.example`
+- **Contact Function**: The `submitContactForm` HTTPS function lives in the `functions/` directory and requires `@sendgrid/mail`. Install dependencies there (`cd functions && npm install`) and deploy with `firebase deploy --only functions`.
 
 **Deployment**:
 1. Install the Firebase CLI and run `firebase login`
 2. Configure `firebase.json` (if not already) to serve the built `dist` directory
-3. Deploy with `firebase deploy --only hosting`
-4. Ensure Firestore rules allow read access for the public globals document or implement authentication flows
+3. Deploy hosting with `firebase deploy --only hosting`
+4. Deploy functions with `firebase deploy --only functions`
+5. Ensure Firestore rules allow read access for the public globals document or implement authentication flows
 
 ### Decap CMS
 - **Admin Interface**: `/admin/`

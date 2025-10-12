@@ -117,7 +117,7 @@ export default function CustomerReviews() {
               ))}
             </div>
             <span className='text-lg font-semibold text-foreground'>4.8 out of 5</span>
-            <span className='text-muted-foreground'>from 7,400+ verified reviews</span>
+            <span className='text-muted-foreground'>from 1,200+ verified reviews</span>
           </div>
         </div>
       </div>

@@ -60,13 +60,42 @@ export default function ContactSection() {
   });
 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Contact form submitted:', formData);
-    // TODO: remove mock functionality - integrate with real contact system
-    setShowSuccessDialog(true);
-    setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    const endpoint = getContactFunctionUrl();
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        const errorMessage = errorPayload?.error ?? 'We could not send your message. Please try again.';
+        throw new Error(errorMessage);
+      }
+
+      setShowSuccessDialog(true);
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+    } catch (error) {
+      if (error instanceof Error) {
+        setSubmitError(error.message);
+      } else {
+        setSubmitError('We could not send your message. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field: keyof ContactFormData, value: string) => {
@@ -227,9 +256,11 @@ export default function ContactSection() {
                   type='submit'
                   className='w-full bg-chart-1 hover:bg-chart-1/90 text-white py-6'
                   data-testid='button-send-message'
+                  disabled={isSubmitting}
                 >
-                  Send Message
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
+                {submitError && <p className='text-sm text-red-500'>{submitError}</p>}
               </form>
             </CardContent>
           </Card>
@@ -265,4 +296,10 @@ export default function ContactSection() {
       </AlertDialog>
     </section>
   );
+}
+
+function getContactFunctionUrl() {
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+  const region = import.meta.env.VITE_FIREBASE_FUNCTIONS_REGION || 'us-central1';
+  return projectId ? `https://${region}-${projectId}.cloudfunctions.net/submitContactForm` : '/api/contact';
 }

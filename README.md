@@ -8,6 +8,12 @@ This project delivers the Abex Transport marketing site built with React, Vite, 
 2. Copy `.env.example` to `.env` and provide your Firebase web app config plus the Firestore document path for global settings.
 3. Start the dev server with `npm run dev`.
 
+## Contact Form Email Function
+
+- A Firebase HTTPS function named `submitContactForm` relays contact form submissions to `bona@abextransport.com` through SendGrid.
+- Install its dependencies with `cd functions && npm install` before running locally or deploying with `firebase deploy --only functions`.
+- The web app resolves the endpoint automatically using `VITE_FIREBASE_PROJECT_ID`; set `VITE_FIREBASE_FUNCTIONS_REGION` if you deploy outside the default `us-central1` region.
+
 ## Firebase Integration
 
 - Firebase Authentication and Hosting power customer logins and static asset delivery.
