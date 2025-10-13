@@ -89,6 +89,76 @@ function loadGooglePlacesSdk(): Promise<typeof window.google | null> {
   return googlePlacesScriptPromise;
 }
 
+const zipCache = new Map<string, string>();
+const DEFAULT_CITY_STATE_ZIPS: Record<string, string> = {
+  'houston|tx': '77002',
+  'los angeles|ca': '90001',
+};
+
+function buildCityStateKey(city: string, state: string) {
+  return `${city.trim().toLowerCase()}|${state.trim().toLowerCase()}`;
+}
+
+function extractPostalCodeFromComponents(components?: PlaceAddressComponent[]) {
+  if (!components) return '';
+  const postalComponent = components.find((component) => component.types?.includes('postal_code'));
+  return postalComponent?.long_name?.trim() ?? '';
+}
+
+async function resolveZipForCityState(city: string, state: string) {
+  const normalizedCity = city.trim();
+  const normalizedState = state.trim();
+  if (!normalizedCity || !normalizedState) return '';
+
+  const cacheKey = buildCityStateKey(normalizedCity, normalizedState);
+  const cached = zipCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const apiKey = GOOGLE_PLACES_API_KEY;
+  if (!apiKey || typeof fetch === 'undefined') {
+    const fallback = DEFAULT_CITY_STATE_ZIPS[cacheKey] ?? '00000';
+    zipCache.set(cacheKey, fallback);
+    return fallback;
+  }
+
+  try {
+    const encodedAddress = encodeURIComponent(`${normalizedCity}, ${normalizedState}`);
+    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&components=country:US&key=${apiKey}`;
+    const geocodeResponse = await fetch(geocodeUrl);
+    const geocodeJson = await geocodeResponse.json();
+
+    const primaryResult = Array.isArray(geocodeJson.results) ? geocodeJson.results[0] : null;
+    const initialPostalCode = extractPostalCodeFromComponents(primaryResult?.address_components);
+    if (initialPostalCode) {
+      zipCache.set(cacheKey, initialPostalCode);
+      return initialPostalCode;
+    }
+
+    const location = primaryResult?.geometry?.location;
+    if (location?.lat != null && location?.lng != null) {
+      const reverseUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&result_type=postal_code&key=${apiKey}`;
+      const reverseResponse = await fetch(reverseUrl);
+      const reverseJson = await reverseResponse.json();
+      const reverseResult = Array.isArray(reverseJson.results) ? reverseJson.results[0] : null;
+      const reversePostalCode = extractPostalCodeFromComponents(reverseResult?.address_components);
+      if (reversePostalCode) {
+        zipCache.set(cacheKey, reversePostalCode);
+        return reversePostalCode;
+      }
+    }
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error('Failed to resolve ZIP code via Geocoding API', error);
+    }
+  }
+
+  const fallback = DEFAULT_CITY_STATE_ZIPS[cacheKey] ?? '00000';
+  zipCache.set(cacheKey, fallback);
+  return fallback;
+}
+
 function toCityStateZip(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return '';
@@ -136,6 +206,77 @@ function toCityStateZip(value: string) {
   const formatted = parts.join(' ').replace(/\s+/g, ' ').trim();
 
   return formatted || trimmed;
+}
+
+function parseLocationPartsInternal(value: string) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const simpleMatch = trimmed.match(/^(.+?)[,\s]+([A-Za-z]{2})(?:[,\s]+(\d{5}(?:-\d{4})?))?$/);
+  if (simpleMatch) {
+    const city = simpleMatch[1].replace(/[,]/g, '').trim();
+    const state = simpleMatch[2].toUpperCase();
+    const postalCode = (simpleMatch[3] ?? '').trim();
+    if (!state) return null;
+    return { city, state, postalCode };
+  }
+
+  const segments = trimmed
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const postalMatch = trimmed.match(/\b\d{5}(?:-\d{4})?\b/);
+  const postalCode = postalMatch ? postalMatch[0] : '';
+
+  let state = '';
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const segment = segments[i];
+    const stateMatch = segment.match(/\b([A-Za-z]{2})\b/);
+    if (stateMatch) {
+      state = stateMatch[1].toUpperCase();
+      segments.splice(i, 1);
+      break;
+    }
+  }
+
+  if (!state) {
+    const fallbackStateMatch = trimmed.match(/\b([A-Za-z]{2})\b/);
+    if (fallbackStateMatch) {
+      state = fallbackStateMatch[1].toUpperCase();
+    }
+  }
+
+  if (!state) return null;
+
+  const cityFromSegments = segments.join(', ').trim();
+  const city =
+    cityFromSegments ||
+    trimmed.replace(state, '').replace(postalCode, '').replace(/[,]/g, ' ').trim() ||
+    trimmed;
+
+  return {
+    city,
+    state,
+    postalCode,
+  };
+}
+
+async function ensureCityStateZip(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  const currentParts = parseLocationPartsInternal(trimmed);
+  if (!currentParts?.city || !currentParts?.state) {
+    return toCityStateZip(trimmed);
+  }
+
+  if (currentParts.postalCode && currentParts.postalCode.length >= 5) {
+    return toCityStateZip(`${currentParts.city} ${currentParts.state} ${currentParts.postalCode}`);
+  }
+
+  const resolvedZip = await resolveZipForCityState(currentParts.city, currentParts.state);
+  return toCityStateZip(`${currentParts.city} ${currentParts.state} ${resolvedZip}`);
 }
 
 interface PlaceAddressComponent {
@@ -384,6 +525,7 @@ export default function MultiStepQuoteForm() {
   const destinationBlurTimeout = useRef<number | null>(null);
   const originSessionTokenRef = useRef<any>(null);
   const destinationSessionTokenRef = useRef<any>(null);
+  const isMountedRef = useRef(true);
 
   const clearOriginBlurTimeout = () => {
     if (originBlurTimeout.current !== null) {
@@ -421,7 +563,41 @@ export default function MultiStepQuoteForm() {
     destinationSessionTokenRef.current = null;
   };
 
-  const normalizeLocationValue = (value: string) => toCityStateZip(value).trim();
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const commitOriginValue = async (rawValue: string) => {
+    const ensured = await ensureCityStateZip(rawValue);
+    if (!isMountedRef.current) return ensured;
+    setStepOneData((prev) =>
+      prev.origin === ensured
+        ? prev
+        : {
+            ...prev,
+            origin: ensured,
+          }
+    );
+    setOriginQuery(ensured);
+    return ensured;
+  };
+
+  const commitDestinationValue = async (rawValue: string) => {
+    const ensured = await ensureCityStateZip(rawValue);
+    if (!isMountedRef.current) return ensured;
+    setStepOneData((prev) =>
+      prev.destination === ensured
+        ? prev
+        : {
+            ...prev,
+            destination: ensured,
+          }
+    );
+    setDestinationQuery(ensured);
+    return ensured;
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -496,12 +672,7 @@ export default function MultiStepQuoteForm() {
           console.error('Failed to resolve origin place details', error);
         }
       }
-      const normalized = normalizeLocationValue(formatted || suggestion.description);
-      setStepOneData((prev) => ({
-        ...prev,
-        origin: normalized,
-      }));
-      setOriginQuery(normalized);
+      await commitOriginValue(formatted || suggestion.description);
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
         console.error('Failed to resolve origin place details', error);
@@ -533,12 +704,7 @@ export default function MultiStepQuoteForm() {
           console.error('Failed to resolve destination place details', error);
         }
       }
-      const normalized = normalizeLocationValue(formatted || suggestion.description);
-      setStepOneData((prev) => ({
-        ...prev,
-        destination: normalized,
-      }));
-      setDestinationQuery(normalized);
+      await commitDestinationValue(formatted || suggestion.description);
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
         console.error('Failed to resolve destination place details', error);
@@ -569,18 +735,18 @@ export default function MultiStepQuoteForm() {
     const value = event.target.value;
     clearOriginBlurTimeout();
     originBlurTimeout.current = window.setTimeout(() => {
-      const normalized = normalizeLocationValue(value);
-      setStepOneData((prev) =>
-        prev.origin === normalized
-          ? prev
-          : {
-              ...prev,
-              origin: normalized,
-            }
-      );
-      setOriginQuery(normalized);
       setShowOriginSuggestions(false);
-      resetOriginSessionToken();
+      commitOriginValue(value)
+        .catch((error) => {
+          if (import.meta.env.DEV) {
+            console.error('Failed to normalize origin location', error);
+          }
+        })
+        .finally(() => {
+          if (isMountedRef.current) {
+            resetOriginSessionToken();
+          }
+        });
     }, 150);
   };
 
@@ -588,18 +754,18 @@ export default function MultiStepQuoteForm() {
     const value = event.target.value;
     clearDestinationBlurTimeout();
     destinationBlurTimeout.current = window.setTimeout(() => {
-      const normalized = normalizeLocationValue(value);
-      setStepOneData((prev) =>
-        prev.destination === normalized
-          ? prev
-          : {
-              ...prev,
-              destination: normalized,
-            }
-      );
-      setDestinationQuery(normalized);
       setShowDestinationSuggestions(false);
-      resetDestinationSessionToken();
+      commitDestinationValue(value)
+        .catch((error) => {
+          if (import.meta.env.DEV) {
+            console.error('Failed to normalize destination location', error);
+          }
+        })
+        .finally(() => {
+          if (isMountedRef.current) {
+            resetDestinationSessionToken();
+          }
+        });
     }, 150);
   };
 
@@ -786,16 +952,24 @@ export default function MultiStepQuoteForm() {
     setStepTwoData((prev) => ({ ...prev, model: '' }));
   }, [stepTwoData.make, stepTwoData.year]);
 
+  const originLocationValid = Boolean(parseLocationParts(stepOneData.origin));
+  const destinationLocationValid = Boolean(parseLocationParts(stepOneData.destination));
   const canProceedFromStep1 =
-    stepOneData.origin &&
-    stepOneData.destination &&
-    stepOneData.pickupDate &&
-    stepOneData.trailerType;
+    originLocationValid &&
+    destinationLocationValid &&
+    Boolean(stepOneData.pickupDate) &&
+    Boolean(stepOneData.trailerType);
   const canProceedFromStep2 = stepTwoData.year && stepTwoData.make && stepTwoData.model;
   const canSubmitForm =
     stepThreeData.firstName && stepThreeData.lastName && stepThreeData.email && stepThreeData.phone;
 
   const handleNext = () => {
+    if (
+      (currentStep === 1 && !canProceedFromStep1) ||
+      (currentStep === 2 && !canProceedFromStep2)
+    ) {
+      return;
+    }
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
@@ -823,7 +997,7 @@ export default function MultiStepQuoteForm() {
     const destinationParts = parseLocationParts(stepOneData.destination);
 
     if (!originParts || !destinationParts) {
-      setSubmitError('Please choose valid origin and destination cities from the suggestions.');
+      setSubmitError('Please provide valid origin and destination including city, state, and ZIP code.');
       return;
     }
 
@@ -1063,6 +1237,9 @@ export default function MultiStepQuoteForm() {
                     </div>
                   )}
                 </div>
+                {!originLocationValid && stepOneData.origin && (
+                  <p className='text-xs text-red-500'>Include city, state, and ZIP (e.g. Houston TX 77213).</p>
+                )}
               </div>
 
               <div className='space-y-2'>
@@ -1114,6 +1291,11 @@ export default function MultiStepQuoteForm() {
                     </div>
                   )}
                 </div>
+                {!destinationLocationValid && stepOneData.destination && (
+                  <p className='text-xs text-red-500'>
+                    Include city, state, and ZIP (e.g. Los Angeles CA 90001).
+                  </p>
+                )}
               </div>
 
               <div className='space-y-2'>
@@ -1472,56 +1654,14 @@ export default function MultiStepQuoteForm() {
 }
 
 function parseLocationParts(value: string) {
-  if (!value) return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-
-  const simpleMatch = trimmed.match(/^(.+?)[,\s]+([A-Za-z]{2})(?:[,\s]+(\d{5}(?:-\d{4})?))?$/);
-  if (simpleMatch) {
-    const city = simpleMatch[1].replace(/[,]/g, '').trim();
-    const state = simpleMatch[2].toUpperCase();
-    const postalCode = (simpleMatch[3] ?? '').trim();
-    if (!state) return null;
-    return { city, state, postalCode };
-  }
-
-  const segments = trimmed
-    .split(',')
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  const postalMatch = trimmed.match(/\b\d{5}(?:-\d{4})?\b/);
-  const postalCode = postalMatch ? postalMatch[0] : '';
-
-  let state = '';
-  for (let i = segments.length - 1; i >= 0; i--) {
-    const segment = segments[i];
-    const stateMatch = segment.match(/\b([A-Za-z]{2})\b/);
-    if (stateMatch) {
-      state = stateMatch[1].toUpperCase();
-      segments.splice(i, 1);
-      break;
-    }
-  }
-
-  if (!state) {
-    const fallbackStateMatch = trimmed.match(/\b([A-Za-z]{2})\b/);
-    if (fallbackStateMatch) {
-      state = fallbackStateMatch[1].toUpperCase();
-    }
-  }
-
-  if (!state) return null;
-
-  const cityFromSegments = segments.join(', ').trim();
-  const city =
-    cityFromSegments ||
-    trimmed.replace(state, '').replace(postalCode, '').replace(/[,]/g, ' ').trim() ||
-    trimmed;
+  const parts = parseLocationPartsInternal(value);
+  if (!parts?.city || !parts?.state) return null;
+  const zipMatch = parts.postalCode?.match(/\b\d{5}(?:-\d{4})?\b/);
+  if (!zipMatch) return null;
 
   return {
-    city,
-    state,
-    postalCode,
+    city: parts.city.replace(/\s+/g, ' ').trim(),
+    state: parts.state.toUpperCase(),
+    postalCode: zipMatch[0],
   };
 }

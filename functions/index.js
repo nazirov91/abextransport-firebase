@@ -2,7 +2,7 @@ const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
 
 const QUOTE_WEBHOOK_URL =
-  'https://app.berocker.com/api/v1/auto-logistics/client/webhooks/lead/68ebc2deb296d/save';
+  'https://app.berocker.com/api/v1/auto-logistics/client/webhooks/lead/689df22231b3a/save';
 
 const VEHICLE_TYPE_CANONICAL = new Map([
   ['car', 'Car'],
