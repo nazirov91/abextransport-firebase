@@ -1,14 +1,8 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
-const sgMail = require('@sendgrid/mail');
-
-const SENDGRID_API_KEY = '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';
-const RECIPIENT_EMAIL = 'sardor.nazirov@gmail.com';
-// const RECIPIENT_EMAIL = 'contact@abextransport.com';
-const FALLBACK_FROM_EMAIL = 'no-reply@sales.abextransport.com';
 
 const QUOTE_WEBHOOK_URL =
-  'https://app.berocker.com/api/v1/auto-logistics/client/webhooks/lead/689df22231b3a/save';
+  'https://app.berocker.com/api/v1/auto-logistics/client/webhooks/lead/68ebc2deb296d/save';
 
 const VEHICLE_TYPE_CANONICAL = new Map([
   ['car', 'Car'],
@@ -31,76 +25,6 @@ const VEHICLE_TYPE_CANONICAL = new Map([
 
 const ALLOWED_TRANSPORT_TYPES = new Set(['open', 'enclosed']);
 
-if (!SENDGRID_API_KEY) {
-  logger.warn('SendGrid API key is not configured. Emails will not be sent.');
-} else {
-  sgMail.setApiKey(SENDGRID_API_KEY);
-}
-
-exports.submitContactForm = onRequest({ cors: true, region: 'us-central1' }, async (req, res) => {
-  if (prepareResponse(req, res)) {
-    return;
-  }
-
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
-  }
-
-  const { name, email, phone, subject, message } = req.body || {};
-
-  if (!name || !email || !phone || !subject || !message) {
-    res.status(400).json({ error: 'Missing required form data' });
-    return;
-  }
-
-  if (!SENDGRID_API_KEY) {
-    logger.error('SendGrid API key missing; unable to deliver contact form submission.');
-    res.status(500).json({ error: 'Email service not configured' });
-    return;
-  }
-
-  const plainTextMessage = [
-    'New contact request from Abex Transport (abextransport.com)',
-    '',
-    `Name: ${name}`,
-    `Email: ${email}`,
-    `Phone: ${phone}`,
-    `Subject: ${subject}`,
-    '',
-    'Message:',
-    message,
-  ].join('\n');
-
-  const htmlMessage = `
-    <h2>New contact request from Abex Transport landing page</h2>
-    <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-    <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-    <p><strong>Phone:</strong> ${escapeHtml(phone)}</p>
-    <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
-    <p><strong>Message:</strong></p>
-    <p>${escapeHtml(message).replace(/\n/g, '<br/>')}</p>
-  `;
-
-  try {
-    await sgMail.send({
-      to: RECIPIENT_EMAIL,
-      from: FALLBACK_FROM_EMAIL,
-      replyTo: email,
-      subject: `[Contact Form - abextransport.com] ${subject}`,
-      text: plainTextMessage,
-      html: htmlMessage,
-    });
-
-    res.status(200).json({ success: true });
-  } catch (error) {
-    logger.error('Failed to send contact form email via SendGrid', error);
-    res
-      .status(500)
-      .json({ error: 'Failed to send message' + error.toString(), raw: error.toString() });
-  }
-});
-
 exports.submitQuoteRequest = onRequest({ cors: true, region: 'us-central1' }, async (req, res) => {
   if (prepareResponse(req, res)) {
     return;
@@ -112,8 +36,6 @@ exports.submitQuoteRequest = onRequest({ cors: true, region: 'us-central1' }, as
   }
 
   const body = req.body || {};
-
-  console.log('BODY', body);
 
   const firstName = readString(body.firstName ?? body.first_name);
   if (!firstName) {
@@ -292,25 +214,6 @@ function prepareResponse(req, res) {
   }
 
   return false;
-}
-
-function escapeHtml(input) {
-  return String(input).replace(/[&<>"']/g, (char) => {
-    switch (char) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '"':
-        return '&quot;';
-      case "'":
-        return '&#039;';
-      default:
-        return char;
-    }
-  });
 }
 
 function readString(value) {

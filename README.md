@@ -8,14 +8,6 @@ This project delivers the Abex Transport marketing site built with React, Vite, 
 2. Copy `.env.example` to `.env` and provide your Firebase web app config plus the Firestore document path for global settings.
 3. Start the dev server with `npm run dev`.
 
-## Contact Form Email Function
-
-- A Firebase HTTPS function named `submitContactForm` relays contact form submissions to `contact@abextransport.com` through SendGrid.
-- Install its dependencies with `cd functions && npm install` before running locally or deploying with `firebase deploy --only functions`.
-- The web app resolves the endpoint automatically using `VITE_FIREBASE_PROJECT_ID`; set `VITE_FIREBASE_FUNCTIONS_REGION` if you deploy outside the default `us-central1` region.
-- Provide the SendGrid API key via `SENDGRID_API_KEY` environment variable (e.g. `firebase functions:config:set sendgrid.key="..."`) and rotate/revoke any previously exposed keys.
-- During local development you can point the UI at the Functions emulator by setting `VITE_USE_FUNCTIONS_EMULATOR=true` (optionally adjust host/port via `VITE_FIREBASE_EMULATOR_HOST`, `VITE_FIREBASE_FUNCTIONS_PORT`, `VITE_FIREBASE_EMULATOR_PROTOCOL`).
-
 ## Quote Request Webhook
 
 - The `submitQuoteRequest` HTTPS function forwards quote submissions to `https://app.berocker.com/api/v1/auto-logistics/client/webhooks/lead/689df22231b3a/save`.
@@ -23,6 +15,12 @@ This project delivers the Abex Transport marketing site built with React, Vite, 
 - Accepted vehicle types: `Car`, `sedan`, `Boat`, `Motorcycle`, `Pickup`, `pickup_2_doors`, `SUV`, `Van`, `RV`, `Travel Trailer`, `ATV`, `Convertible`, `Coupe`, `Other`.
 - The function is exposed at `/api/quote` locally and in production via Firebase Hosting rewrites, so the client app can call it without hard-coding region-specific URLs.
 - The same `VITE_USE_FUNCTIONS_EMULATOR=true` flag makes the quote form target the emulator when running `npm run dev`.
+
+## Customer Support Hub
+
+- The Contact section now highlights real-time concierge options (call, text, email, callback scheduling) instead of a form.
+- Update the CTA targets in `client/src/components/ContactSection.tsx` if phone numbers or scheduling links change.
+- Because there is no email form, no SendGrid credentials are required for the marketing site any longer.
 
 ## Firebase Integration
 

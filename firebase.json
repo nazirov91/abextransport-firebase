@@ -11,13 +11,6 @@
     ],
     "rewrites": [
       {
-        "source": "/api/contact",
-        "function": {
-          "functionId": "submitContactForm",
-          "region": "us-central1"
-        }
-      },
-      {
         "source": "/api/quote",
         "function": {
           "functionId": "submitQuoteRequest",

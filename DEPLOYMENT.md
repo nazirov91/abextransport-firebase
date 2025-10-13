@@ -30,9 +30,7 @@ Removed. This project no longer includes Netlify configuration or workflows.
 - **Firestore Globals**: Store site-wide settings in a Firestore document referenced by `VITE_FIRESTORE_GLOBALS_DOC`
 - **Firestore FAQ**: Manage FAQ entries in the document referenced by `VITE_FIRESTORE_FAQ_DOC`
 - **Firebase SDK Config**: Provide the web app config via the `.env` variables in `.env.example`
-- **Contact Function**: The `submitContactForm` HTTPS function lives in the `functions/` directory and requires `@sendgrid/mail`. Install dependencies there (`cd functions && npm install`) and deploy with `firebase deploy --only functions`.
 - **Quote Function**: `submitQuoteRequest` proxies quote submissions to the BeRocker webhook. It relies on the same `functions/` bundle and is available through the `/api/quote` Hosting rewrite.
-- **Secrets**: Set the SendGrid API key as an environment value (`firebase functions:config:set sendgrid.key="..."` or `SENDGRID_API_KEY=...` when running locally). Never commit secrets to the repository—rotate any key that was exposed.
 
 **Deployment**:
 1. Install the Firebase CLI and run `firebase login`

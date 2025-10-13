@@ -1,321 +1,113 @@
-import { useState } from 'react';
-import { extractDigits, formatPhoneNumber, normalizePhoneNumber } from '@/lib/phone';
-import { resolveFunctionUrl } from '@/lib/functions';
+import contactTrustImage from '@/assets/happy_customer.png';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Phone, Mail, MapPin, Clock, MessageSquare, CheckCircle } from 'lucide-react';
-
-interface ContactFormData {
-  name: string;
-  email: string;
-  phone: string;
-  subject: string;
-  message: string;
-}
+import { CalendarCheck, Clock, Headset, Mail, MapPin, Phone, ShieldCheck } from 'lucide-react';
 
 const contactInfo = [
   {
     icon: Phone,
-    title: 'Call Us Now',
+    title: 'Call Dispatch',
     details: '+1 (281) 220-1799',
-    description: 'Speak with a transport specialist',
+    description: 'Speak directly with an Abex transport strategist.',
+    buttonLabel: 'Call now',
+    buttonHref: 'tel:+12812201799',
   },
   {
     icon: Mail,
-    title: 'Email Us',
+    title: 'Email Logistics Desk',
     details: 'contact@abextransport.com',
-    description: 'Get a response within 1 hour',
+    description: 'Priority inbox monitored by senior coordinators.',
+    buttonLabel: 'Email dispatch',
+    buttonHref: 'mailto:contact@abextransport.com',
   },
   {
     icon: Clock,
     title: 'Business Hours',
-    details: '8 AM - 7 PM EST',
-    description: 'Monday through Friday (10AM - 4PM on Saturdays)',
+    details: '8 AM – 7 PM EST (Mon – Fri)',
+    description: 'Saturday coverage 10 AM – 4. Sunday Closed.',
   },
   {
     icon: MapPin,
-    title: 'Service Area',
-    details: 'All 50 States',
-    description: 'Nationwide coverage',
+    title: 'National Coverage',
+    details: 'All 50 states',
+    description: 'Door-to-door enclosed & open carrier network.',
   },
 ];
 
+const guaranteeHighlights = [
+  'Dedicated dispatcher assigned once we receive your pickup details.',
+  'Route-specific pricing forecasts in under 10 minutes.',
+  'Carrier insurance and background verification handled for you.',
+  'Rapid status notifications by SMS, phone, or email—your choice.',
+];
+
 export default function ContactSection() {
-  const [formData, setFormData] = useState<ContactFormData>({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: '',
-  });
-
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitError(null);
-
-    const digitsOnlyPhone = extractDigits(formData.phone);
-    if (digitsOnlyPhone.length < 10) {
-      setSubmitError('Please enter a valid phone number.');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    const endpoint = resolveFunctionUrl('submitContactForm', '/api/contact');
-    const payload = {
-      ...formData,
-      phone: normalizePhoneNumber(formData.phone),
-    };
-
-    console.log('url', endpoint);
-    console.log('payload', JSON.stringify(payload));
-
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorPayload = await response.json().catch(() => null);
-        const errorMessage =
-          errorPayload?.error ?? 'We could not send your message. Please try again.';
-        throw new Error(errorMessage);
-      }
-
-      setShowSuccessDialog(true);
-      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-    } catch (error) {
-      if (error instanceof Error) {
-        setSubmitError(error.message);
-      } else {
-        setSubmitError('We could not send your message. Please try again.');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleInputChange = (field: keyof ContactFormData, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: field === 'phone' ? formatPhoneNumber(value) : value,
-    }));
-  };
-
   return (
-    <section id='contact' className='py-20 bg-muted/30'>
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-        <div className='text-center mb-16'>
-          <h2 className='text-3xl md:text-4xl font-bold text-foreground mb-4'>Get in Touch</h2>
-          <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
-            Have questions about auto transport? Need a custom quote? Our expert team is here to
-            help you every step of the way.
+    <section id='contact' className='bg-muted/30 py-20'>
+      <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
+        <div className='text-center'>
+          <span className='inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary'>
+            Humans ready to help 7 days a week
+          </span>
+          <h2 className='mt-6 text-3xl font-bold text-foreground md:text-4xl'>
+            White-glove transport without the guesswork
+          </h2>
+          <p className='mx-auto mt-4 max-w-3xl text-lg text-muted-foreground mb-4'>
+            Start with a quick conversation—no phone trees, no sales scripts. Get real pricing, real
+            timeline guidance, and a dedicated coordinator who tracks your shipment from dispatch to
+            delivery.
           </p>
         </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-12'>
-          {/* Contact Information */}
-          <div className='space-y-8'>
-            <div>
-              <h3 className='text-2xl font-semibold text-foreground mb-6'>Contact Information</h3>
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
-                {contactInfo.map((info, index) => {
-                  const IconComponent = info.icon;
-                  return (
-                    <Card key={index} className='border-card-border'>
-                      <CardContent className='pt-6'>
-                        <div className='flex items-start gap-3'>
-                          <div className='w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0'>
-                            <IconComponent className='h-5 w-5 text-primary' />
-                          </div>
-                          <div>
-                            <h4 className='font-semibold text-foreground mb-1'>{info.title}</h4>
-                            <div className='text-primary font-medium mb-1'>{info.details}</div>
-                            <p className='text-sm text-muted-foreground'>{info.description}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Quick Contact CTA */}
-            <Card className='bg-primary/5 border-primary/20'>
+        <div className='mt-16 grid grid-cols-1 gap-8 lg:grid-cols-3'>
+          <div className='space-y-6 lg:col-span-2'>
+            <Card className='border-card-border'>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <MessageSquare className='h-5 w-5' />
-                  Need Immediate Assistance?
-                </CardTitle>
+                <CardTitle className='text-2xl'>Talk to a transport strategist</CardTitle>
                 <CardDescription>
-                  Speak with one of our transport specialists right now
+                  Choose the channel that fits your day—our core team handles every quote and live
+                  shipment adjustment.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className='flex flex-col sm:flex-row gap-4'>
-                  <Button
-                    size='lg'
-                    className='bg-chart-1 hover:bg-chart-1/90 text-white flex-1'
-                    data-testid='button-call-now'
-                    onClick={() => console.log('Call now clicked')}
-                  >
-                    <Phone className='h-4 w-4 mr-2' />
-                    Call +1 (281) 220-1799
-                  </Button>
-                  <Button
-                    variant='outline'
-                    size='lg'
-                    className='flex-1'
-                    data-testid='button-email-now'
-                    onClick={() => console.log('Email now clicked')}
-                  >
-                    <Mail className='h-4 w-4 mr-2' />
-                    Send Email
-                  </Button>
+                <div className='grid gap-6 sm:grid-cols-2 px-10 sm:px-0'>
+                  {contactInfo.map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <div
+                        key={index}
+                        className='flex h-full flex-col gap-4 rounded-xl border border-card-border/70 bg-card/70 shadow-sm transition hover:-translate-y-1 hover:shadow-lg px-6 py-6'
+                      >
+                        <span className='flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary'>
+                          <Icon className='h-5 w-5' />
+                        </span>
+                        <div>
+                          <h3 className='text-base font-semibold text-foreground'>{item.title}</h3>
+                          <div className='text-lg font-semibold text-primary'>{item.details}</div>
+                          <p className='mt-1 text-sm text-muted-foreground'>{item.description}</p>
+                        </div>
+                        {item.buttonHref && item.buttonLabel && (
+                          <Button variant='outline' size='sm' className='mt-auto w-full'>
+                            {item.buttonLabel}
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Contact Form */}
-          <Card className='border-card-border'>
-            <CardHeader>
-              <CardTitle>Send Us a Message</CardTitle>
-              <CardDescription>
-                Fill out the form below and we'll get back to you within 1 hour
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className='space-y-4'>
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='contact-name'>Full Name</Label>
-                    <Input
-                      id='contact-name'
-                      placeholder='Your name'
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      data-testid='input-contact-name'
-                      required
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='contact-phone'>Phone Number</Label>
-                    <Input
-                      id='contact-phone'
-                      type='tel'
-                      inputMode='tel'
-                      maxLength={20}
-                      placeholder='+1 (281) 220-1799'
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      data-testid='input-contact-phone'
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='contact-email'>Email Address</Label>
-                  <Input
-                    id='contact-email'
-                    type='email'
-                    placeholder='contact@abextransport.com'
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    data-testid='input-contact-email'
-                    required
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='contact-subject'>Subject</Label>
-                  <Input
-                    id='contact-subject'
-                    placeholder='What can we help you with?'
-                    value={formData.subject}
-                    onChange={(e) => handleInputChange('subject', e.target.value)}
-                    data-testid='input-contact-subject'
-                    required
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='contact-message'>Message</Label>
-                  <Textarea
-                    id='contact-message'
-                    placeholder='Tell us about your auto transport needs...'
-                    className='min-h-32'
-                    value={formData.message}
-                    onChange={(e) => handleInputChange('message', e.target.value)}
-                    data-testid='textarea-contact-message'
-                    required
-                  />
-                </div>
-
-                <Button
-                  type='submit'
-                  className='w-full bg-chart-1 hover:bg-chart-1/90 text-white py-6'
-                  data-testid='button-send-message'
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
-                </Button>
-                {submitError && <p className='text-sm text-red-500'>{submitError}</p>}
-              </form>
-            </CardContent>
-          </Card>
+          <div className='relative overflow-hidden rounded-3xl border border-primary/40 bg-black/5 shadow-xl'>
+            <img
+              src={contactTrustImage}
+              alt='Happy Abex Transport customers celebrating a successful vehicle delivery'
+              className='h-full w-full object-cover'
+            />
+          </div>
         </div>
       </div>
-
-      {/* Success Alert Dialog */}
-      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <AlertDialogContent className='sm:max-w-md'>
-          <AlertDialogHeader>
-            <div className='flex items-center gap-2'>
-              <div className='w-8 h-8 bg-green-100 rounded-full flex items-center justify-center'>
-                <CheckCircle className='h-5 w-5 text-green-600' />
-              </div>
-              <AlertDialogTitle className='text-green-800'>
-                Message Sent Successfully!
-              </AlertDialogTitle>
-            </div>
-            <AlertDialogDescription className='text-black-700'>
-              Thank you for your message! We'll get back to you as soon as possible!
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction
-              onClick={() => setShowSuccessDialog(false)}
-              className='bg-black-600 hover:bg-black-700 text-black'
-              data-testid='button-close-success-dialog'
-            >
-              OK
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </section>
   );
 }
