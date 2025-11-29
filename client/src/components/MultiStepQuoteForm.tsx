@@ -479,6 +479,7 @@ interface NHTSAResponse {
 }
 
 export default function MultiStepQuoteForm() {
+  const [smsConsent, setSmsConsent] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [stepOneData, setStepOneData] = useState<StepOneData>({
     origin: '',
@@ -1024,6 +1025,7 @@ export default function MultiStepQuoteForm() {
         type: stepTwoData.vehicleType,
       },
       comments: stepThreeData.comments.trim(),
+      smsConsent
     };
 
     setIsSubmitting(true);
@@ -1082,6 +1084,7 @@ export default function MultiStepQuoteForm() {
         phone: '',
         comments: '',
       });
+      setSmsConsent(false);
     } catch (error) {
       if (error instanceof Error) {
         setSubmitError(error.message);
@@ -1583,6 +1586,47 @@ export default function MultiStepQuoteForm() {
                   rows={3}
                 />
               </div>
+
+              <div className="space-y-2">
+  <div className="flex items-start space-x-2">
+    <input
+      type="checkbox"
+      id="smsConsent"
+      name="smsConsent"
+      checked={smsConsent}
+      onChange={(e) => setSmsConsent(e.target.checked)}
+      required
+      className="mt-1 h-4 w-4 border-muted-foreground text-primary"
+    />
+    <Label
+      htmlFor="smsConsent"
+      className="text-xs text-muted-foreground leading-snug cursor-pointer"
+    >
+      By providing your mobile number and clicking &quot;Get My Quote,&quot; you consent to receive
+      automated and non-automated SMS messages (such as quotes, shipment updates, and service
+      notifications) from Abex Transport at the number you provided. Message frequency may vary.
+      Message and data rates may apply. Reply STOP to cancel or HELP for help. See our{" "}
+      <a
+        href="https://abextransport.com/terms-of-service"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline"
+      >
+        Terms of Service
+      </a>{" "}
+      and{" "}
+      <a
+        href="https://abextransport.com/privacy-policy"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline"
+      >
+        Privacy Policy
+      </a>{" "}
+      for details.
+    </Label>
+  </div>
+</div>
 
               <div className='flex justify-between pt-4'>
                 <Button
