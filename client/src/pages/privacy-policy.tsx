@@ -25,6 +25,52 @@ export default function PrivacyPolicy() {
           </p>
         </section>
 
+<section className="space-y-4">
+  <h2 className="text-2xl font-semibold">SMS Communications &amp; Consent</h2>
+  <p className="text-muted-foreground">
+    We may send SMS messages to you when you voluntarily provide your mobile number and choose to
+    opt in through our website forms or communication channels. These messages support your shipping
+    process by delivering quotes, booking confirmations, transport updates, and customer service
+    information.
+  </p>
+
+  <ul className="list-disc space-y-2 pl-6 text-muted-foreground">
+    <li>
+      <span className="font-medium text-foreground">Purpose of SMS messaging:</span>{" "}
+      providing quotes, shipment status alerts, customer support responses, and important
+      service-related notifications.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Consent for messages:</span>{" "}
+      by opting in, you authorize Abex Transport to send SMS messages to the mobile number you
+      provided. Message and data rates may apply, and message frequency may vary depending on your
+      requests and active shipments.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Opt-out instructions:</span>{" "}
+      you may opt out of receiving SMS messages at any time by replying <strong>“STOP”</strong> to
+      any message. You may receive one additional message confirming your opt-out request. For
+      assistance, reply <strong>“HELP”</strong> or contact us through our support page.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Consent records:</span>{" "}
+      to maintain compliance with 10DLC, TCPA, and carrier regulations, we securely store your
+      consent status, message history, opt-in time, and any keywords you send (e.g., STOP, HELP).
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">No third-party SMS sharing:</span>{" "}
+      mobile opt-in, SMS consent, and phone numbers collected specifically for SMS communication
+      purposes <strong>will not be shared with any third party or affiliates for marketing
+      purposes</strong>. We may only share information as needed to provide core services or comply
+      with legal requirements.
+    </li>
+  </ul>
+</section>
+
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">1. Information We Collect</h2>
           <p className="text-muted-foreground">
