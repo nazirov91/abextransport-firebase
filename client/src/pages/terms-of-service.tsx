@@ -25,6 +25,67 @@ export default function TermsOfService() {
           </p>
         </section>
 
+<section className="space-y-4">
+  <h2 className="text-2xl font-semibold">SMS Program Terms</h2>
+  <p className="text-muted-foreground">
+    By choosing to opt in to SMS messages from Abex Transport, you agree to receive text messages
+    related to quotes, booking updates, shipment notifications, and customer support at the mobile
+    number you provide. These terms outline how our SMS program operates and the rights you have
+    regarding your messaging preferences.
+  </p>
+
+  <ul className="list-disc space-y-2 pl-6 text-muted-foreground">
+    <li>
+      <span className="font-medium text-foreground">Message purpose:</span>{" "}
+      SMS messages are used to support your transport process, including quote details, booking
+      confirmations, schedule changes, delivery updates, and service-related communication.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Optional participation:</span>{" "}
+      SMS consent is entirely optional and is <strong>not</strong> a condition of purchasing
+      transport services. You may complete any form or request a quote without opting in to SMS.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Message frequency:</span>{" "}
+      message frequency will vary depending on your shipment activity, communication preferences,
+      and interactions with our team.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Cost disclosure:</span>{" "}
+      standard message and data rates may apply based on your mobile carrier plan.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Opt-out instructions:</span>{" "}
+      you may stop receiving SMS messages at any time by replying{" "}
+      <strong>“STOP”</strong> to any message. You may receive a final confirmation message verifying
+      that your opt-out request has been processed.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Help &amp; support:</span>{" "}
+      reply <strong>“HELP”</strong> for assistance, or contact us directly through our support
+      page for additional help with your account or shipment.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Accuracy of information:</span>{" "}
+      you agree that the mobile number you provide is your own and that you have the authority to
+      give consent for SMS messages to be sent to that number.
+    </li>
+
+    <li>
+      <span className="font-medium text-foreground">Compliance:</span>{" "}
+      our SMS practices follow 10DLC carrier requirements, TCPA regulations, and industry-standard
+      consent guidelines. We maintain records of opt-ins, consent timestamps, and keyword
+      interactions (e.g., STOP, HELP) for compliance and consumer protection.
+    </li>
+  </ul>
+</section>
+
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">1. Brokerage Services</h2>
           <ul className="list-disc space-y-2 pl-6 text-muted-foreground">
