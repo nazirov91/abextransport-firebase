@@ -585,6 +585,14 @@ export default function MultiStepQuoteForm() {
     return ensured;
   };
 
+  function getTodayLocalISO() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   const commitDestinationValue = async (rawValue: string) => {
     const ensured = await ensureCityStateZip(rawValue);
     if (!isMountedRef.current) return ensured;
@@ -988,10 +996,15 @@ export default function MultiStepQuoteForm() {
 
     setSubmitError(null);
 
-    const phoneDigits = extractDigits(stepThreeData.phone);
-    if (phoneDigits.length < 10) {
-      setSubmitError('Please enter a valid phone number.');
-      return;
+    let phoneDigits = extractDigits(stepThreeData.phone);
+
+    if (!smsConsent) {
+      phoneDigits = '1234567890';
+    } else {
+      if (phoneDigits.length < 10) {
+        setSubmitError('Please enter a valid phone number.');
+        return;
+      }
     }
 
     const originParts = parseLocationParts(stepOneData.origin);
@@ -1307,6 +1320,7 @@ export default function MultiStepQuoteForm() {
                   <Input
                     id='pickupDate'
                     type='date'
+                    min={getTodayLocalISO()}
                     placeholder='Enter pick up date'
                     value={stepOneData.pickupDate}
                     onChange={(e) =>
@@ -1595,7 +1609,6 @@ export default function MultiStepQuoteForm() {
       name="smsConsent"
       checked={smsConsent}
       onChange={(e) => setSmsConsent(e.target.checked)}
-      required
       className="mt-1 h-4 w-4 border-muted-foreground text-primary"
     />
     <Label
